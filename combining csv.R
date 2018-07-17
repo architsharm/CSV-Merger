@@ -20,7 +20,7 @@ for(i in 1:length(removefiles)){
 data<-data.frame()
 i=1
 for(i in 1:nrow(test)){
-  d1<-read.csv(paste(path,test[i,1],sep="")%>%as.character(),header = head)
+  d1<-read.csv(paste(path,test[i,1],sep="")%>%as.character(),header = head,stringsAsFactors = F)
   data<-rbind.fill(data,d1)
 }
 
