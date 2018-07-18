@@ -13,7 +13,7 @@ ui <- fluidPage(
       
       tags$hr(),
       
-      checkboxInput("header", "Header", TRUE),
+      checkboxInput("header", "Files contain Header", TRUE),
       
       radioButtons("sep", "Separator",
                    choices = c(Comma = ",",
@@ -43,20 +43,24 @@ ui <- fluidPage(
 
 server <- function(input, output,session) {
   data2<<-data.frame()
-  path<<-data.frame(X=character())
+  path<<-data.frame()
   output$downloadData <- downloadHandler(
     filename = function() {
       paste("combined",".csv", sep = "")
     },
     content = function(file) {
-      write.csv(combine(path), file, row.names = FALSE)
+      write.csv(combine(path$Datapath,input$header,input$sep,input$quote), file, row.names = FALSE)
     }
   )
   
   output$contents<-renderTable(
     
+    if(!is.null(input$file1)){
+    d2<-readfiles(input$file1)
+    d2<-select(d2,-Datapath)
+    return(d2)
+    }
     
-    d2<-readfiles(input$file1$datapath)
   )
   
   
@@ -66,18 +70,21 @@ server <- function(input, output,session) {
 
 readfiles<-function(test){
   test1<-test%>%as.data.frame()
-  names(test1)<-c("X")
-  test1$X<-as.character(test1$X)
+  names(test1)<-c("Name","Size","Type","Datapath")
+  test1$Name<-as.character(test1$Name)
+  test1$Size<-as.character(test1$Size)
+  test1$Type<-as.character(test1$Type)
+  test1$Datapath<-as.character(test1$Datapath)
   path<<-rbind(path,test1)
   
 }
 
 
-combine<-function(list){
+combine<-function(list,head,sep,quote){
   list1<-list%>%as.data.frame()
   for(i in 1:nrow(list1)){
-    path<-list1[i,1]
-    d1<-read.csv(path%>%as.character(),stringsAsFactors = F)
+    path1<-list1[i,1]
+    d1<-read.csv(path1%>%as.character(),header = head,sep = sep,quote = quote,stringsAsFactors = F)
     data2<<-plyr::rbind.fill(data2,d1)
   }
   
