@@ -2,7 +2,7 @@ library(shiny)
 library(dplyr)
 # Define UI for data upload app ----
 ui <- fluidPage(
-  titlePanel("Uploading Files"),
+  titlePanel("Combine CSV"),
   sidebarLayout(
     sidebarPanel(
       fileInput("file1", "Choose CSV File",
@@ -14,7 +14,7 @@ ui <- fluidPage(
       tags$hr(),
       
       checkboxInput("header", "Files contain Header", TRUE),
-      
+      #checkboxInput("recursive","Include files in subdirectories",FALSE),
       radioButtons("sep", "Separator",
                    choices = c(Comma = ",",
                                Semicolon = ";",
@@ -28,13 +28,13 @@ ui <- fluidPage(
                    selected = '"'),
       
       tags$hr(),
-      
+      textInput("name", "Name of combined file", value = "Combined", width = NULL, placeholder = "Name of the combined File"),
       downloadButton("downloadData", "Download")
-      
     ),
     
     mainPanel(
-      tableOutput("contents")
+      tableOutput("contents"),
+      uiOutput("choose_columns")
       
     )
     
@@ -42,15 +42,21 @@ ui <- fluidPage(
 )
 
 server <- function(input, output,session) {
+  
   data2<<-data.frame()
+  
   path<<-data.frame()
+  path2<<-data.frame()
+  
   output$downloadData <- downloadHandler(
     filename = function() {
-      paste("combined",".csv", sep = "")
+      paste(input$name,".csv", sep = "")
     },
     content = function(file) {
       write.csv(combine(path$Datapath,input$header,input$sep,input$quote), file, row.names = FALSE)
-    }
+    
+      # combine("C:/Users/Dell/Downloads/Rock.csv",TRUE,",",'"')
+      }
   )
   
   output$contents<-renderTable(
@@ -62,6 +68,22 @@ server <- function(input, output,session) {
     }
     
   )
+  
+  
+  # names<-reactive(unlist(path$Name))
+  
+  
+  output$choose_columns <-renderUI({
+    if(is.null(input$file1))
+      return()
+    d2<-readfiles2(input$file1)
+    names<-select(d2,Name)%>%as.list()
+    print(names[[1]])
+    checkboxGroupInput("columns", "Check/Unchek", 
+                       choices  = names[[1]],
+                       selected = names[[1]])
+  })
+  
   
   
   
@@ -79,6 +101,19 @@ readfiles<-function(test){
   
 }
 
+readfiles2<-function(test){
+  test1<-test%>%as.data.frame()
+  names(test1)<-c("Name","Size","Type","Datapath")
+  test1$Name<-as.character(test1$Name)
+  test1$Size<-as.character(test1$Size)
+  test1$Type<-as.character(test1$Type)
+  test1$Datapath<-as.character(test1$Datapath)
+  path2<<-rbind(path2,test1)
+  
+}
+
+
+
 
 combine<-function(list,head,sep,quote){
   list1<-list%>%as.data.frame()
@@ -93,3 +128,4 @@ combine<-function(list,head,sep,quote){
 
 
 shinyApp(ui, server)
+
