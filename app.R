@@ -41,19 +41,34 @@ ui <- fluidPage(
   )
 )
 
-server <- function(input, output) {
+server <- function(input, output,session) {
   data2<<-data.frame()
+  path<<-data.frame(X=character())
   output$downloadData <- downloadHandler(
-    
     filename = function() {
       paste("combined",".csv", sep = "")
     },
-    
     content = function(file) {
-      write.csv(combine(input$file1$datapath), file, row.names = FALSE)
+      write.csv(combine(path), file, row.names = FALSE)
     }
   )
   
+  output$contents<-renderTable(
+    
+    
+    d2<-readfiles(input$file1$datapath)
+  )
+  
+  
+  
+}
+
+
+readfiles<-function(test){
+  test1<-test%>%as.data.frame()
+  names(test1)<-c("X")
+  test1$X<-as.character(test1$X)
+  path<<-rbind(path,test1)
   
 }
 
