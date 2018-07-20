@@ -9,7 +9,10 @@ ui <- fluidPage(
                 multiple = TRUE,
                 accept = c("text/csv",
                            "text/comma-separated-values,text/plain",
-                           ".csv")),
+                           ".csv"),
+                placeholder="Drag and Drop Files",
+                buttonLabel="+"
+                ),
       
       tags$hr(),
       
@@ -33,7 +36,8 @@ ui <- fluidPage(
     ),
     
     mainPanel(
-      tableOutput("contents"),
+      titlePanel("Choose Files"),
+      # tableOutput("contents"),
       uiOutput("choose_columns")
       
     )
@@ -43,32 +47,20 @@ ui <- fluidPage(
 
 server <- function(input, output,session) {
   
-  data2<<-data.frame()
   
-  path<<-data.frame()
+  # path<<-data.frame()
   path2<<-data.frame()
   
-  output$downloadData <- downloadHandler(
-    filename = function() {
-      paste(input$name,".csv", sep = "")
-    },
-    content = function(file) {
-      write.csv(combine(path$Datapath,input$header,input$sep,input$quote), file, row.names = FALSE)
-    
-      # combine("C:/Users/Dell/Downloads/Rock.csv",TRUE,",",'"')
-      }
-  )
-  
-  output$contents<-renderTable(
-    
-    if(!is.null(input$file1)){
-    d2<-readfiles(input$file1)
-    d2<-select(d2,-Datapath)
-    return(d2)
-    }
-    
-  )
-  
+  # output$contents<-renderTable(
+  #   
+  #   if(!is.null(input$file1)){
+  #   d2<-readfiles(input$file1)
+  #   d2<-select(d2,-Datapath)
+  #   return(d2)
+  #   }
+  #   
+  # )
+  # 
   
   # names<-reactive(unlist(path$Name))
   
@@ -77,29 +69,53 @@ server <- function(input, output,session) {
     if(is.null(input$file1))
       return()
     d2<-readfiles2(input$file1)
+   
     names<-select(d2,Name)%>%as.list()
-    print(names[[1]])
-    checkboxGroupInput("columns", "Check/Unchek", 
+    
+    checkboxGroupInput("columns", "Check/Unchek",
                        choices  = names[[1]],
                        selected = names[[1]])
+    
+    
+
   })
   
   
-  
+  output$downloadData <- downloadHandler(
+    filename = function() {
+      paste(input$name,".csv", sep = "")
+    },
+    content = function(file) {
+      path3<-choose12(input$columns,path2)
+      write.csv(combine(path3$Datapath,input$header,input$sep,input$quote), file, row.names = FALSE)
+      
+      # combine("C:/Users/Dell/Downloads/Rock.csv",TRUE,",",'"')
+    }
+  )
   
 }
 
 
-readfiles<-function(test){
-  test1<-test%>%as.data.frame()
-  names(test1)<-c("Name","Size","Type","Datapath")
-  test1$Name<-as.character(test1$Name)
-  test1$Size<-as.character(test1$Size)
-  test1$Type<-as.character(test1$Type)
-  test1$Datapath<-as.character(test1$Datapath)
-  path<<-rbind(path,test1)
-  
+choose12<-function(check,list){
+  if (!is.null(list)){
+  d23<-filter(list,list$Name %in% check)
+  print(d23)
+  return(d23)
+  }
 }
+
+
+
+# readfiles<-function(test){
+#   test1<-test%>%as.data.frame()
+#   names(test1)<-c("Name","Size","Type","Datapath")
+#   test1$Name<-as.character(test1$Name)
+#   test1$Size<-as.character(test1$Size)
+#   test1$Type<-as.character(test1$Type)
+#   test1$Datapath<-as.character(test1$Datapath)
+#   path<<-rbind(path,test1)
+#   
+# }
 
 readfiles2<-function(test){
   test1<-test%>%as.data.frame()
@@ -117,13 +133,15 @@ readfiles2<-function(test){
 
 combine<-function(list,head,sep,quote){
   list1<-list%>%as.data.frame()
+  data22<-data.frame()
+  # cat(nrow(list1))
   for(i in 1:nrow(list1)){
     path1<-list1[i,1]
     d1<-read.csv(path1%>%as.character(),header = head,sep = sep,quote = quote,stringsAsFactors = F)
-    data2<<-plyr::rbind.fill(data2,d1)
+    data22<-plyr::rbind.fill(data22,d1)
   }
   
-  return(data2)
+  return(data22)
 }
 
 
